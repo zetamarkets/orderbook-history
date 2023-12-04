@@ -105,7 +105,7 @@ async function readFunding() {
           Exchange.pricing.latestFundingRates[assets.assetToIndex(asset)]
         ).toNumber() * Math.pow(10, 2);
 
-      const feedName = `${assets.assetToName(asset)}-FUNDING`;
+      const feedName = `${assets.assetToName(asset)}-PERP-FUNDING`;
       const ts = Date.now();
       console.log(`[${feedName}] funding=${funding} ts=${ts}`);
       storeMap.get(asset)!.storeData(funding, feedName, ts, retention);
