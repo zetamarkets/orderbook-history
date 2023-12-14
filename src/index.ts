@@ -161,7 +161,7 @@ async function main(client: RedisTimeSeries) {
     }, 86_400_000); // 24 hours
   } catch (e) {
     console.error(e);
-    client.disconnect();
+    process.exit(0); // forever will pick it back up
   }
 }
 
