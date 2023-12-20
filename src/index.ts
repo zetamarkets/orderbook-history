@@ -80,10 +80,10 @@ async function readMidpoints() {
       } else {
         midpoint = (orderbook.asks[0].price + orderbook.bids[0].price) / 2;
         console.log(`[${asset}] Orderbook midpoint = ${midpoint}`);
-        // clamp to maximum 0.5% away from oracle
+        // clamp to maximum 1% away from oracle
         midpoint = Math.max(
-          0.995 * markPrice,
-          Math.min(midpoint, 1.005 * markPrice)
+          0.99 * markPrice,
+          Math.min(midpoint, 1.01 * markPrice)
         );
       }
 
