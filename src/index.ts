@@ -12,6 +12,7 @@ import {
   utils,
 } from "@zetamarkets/sdk";
 import { Connection } from "@solana/web3.js";
+import * as fs from "fs";
 
 // Adds timestamp to the start of each log, including modules
 require("log-timestamp")(function () {
@@ -44,6 +45,36 @@ const connection: Connection = new Connection(
 );
 
 let storeMap = new Map<constants.Asset, RedisStore>();
+
+// Not used in prod but handy to keep around for backfilling data easily
+async function backfill() {
+  let rawData = fs.readFileSync("BONK_backfill_1h.json", "utf8");
+  let jsonData = JSON.parse(rawData);
+
+  let i_list = [...Array(jsonData["t"].length).keys()];
+
+  await Promise.all(
+    i_list.map(async (i) => {
+      console.log(i);
+      let timestamp = jsonData["t"][i];
+      let open = parseFloat(jsonData["o"][i]) * 1_000_000;
+      let close = parseFloat(jsonData["c"][i]) * 1_000_000;
+
+      // console.log(timestamp, open, close);
+      await storeMap
+        .get(constants.Asset.ONEMBONK)!
+        .storeData(open, "ONEMBONK-PERP", 1000 * (timestamp + 1), retention);
+      await storeMap
+        .get(constants.Asset.ONEMBONK)!
+        .storeData(
+          close,
+          "ONEMBONK-PERP",
+          1000 * (timestamp + 3600 - 1),
+          retention
+        );
+    })
+  );
+}
 
 async function readMidpoints() {
   await Exchange.updateZetaPricing();
@@ -135,6 +166,9 @@ async function main(client: RedisTimeSeries) {
     );
 
     await Exchange.load(loadExchangeConfig);
+
+    // Only use
+    // await backfill();
 
     setInterval(
       async function () {
