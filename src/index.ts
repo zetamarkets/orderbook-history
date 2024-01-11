@@ -48,7 +48,7 @@ let storeMap = new Map<constants.Asset, RedisStore>();
 
 // Not used in prod but handy to keep around for backfilling data easily
 async function backfill() {
-  let rawData = fs.readFileSync("BONK_backfill_1h.json", "utf8");
+  let rawData = fs.readFileSync("SEI_backfill_1h.json", "utf8");
   let jsonData = JSON.parse(rawData);
 
   let i_list = [...Array(jsonData["t"].length).keys()];
@@ -57,21 +57,16 @@ async function backfill() {
     i_list.map(async (i) => {
       console.log(i);
       let timestamp = jsonData["t"][i];
-      let open = parseFloat(jsonData["o"][i]) * 1_000_000;
-      let close = parseFloat(jsonData["c"][i]) * 1_000_000;
+      let open = parseFloat(jsonData["o"][i]);
+      let close = parseFloat(jsonData["c"][i]);
 
       // console.log(timestamp, open, close);
       await storeMap
-        .get(constants.Asset.ONEMBONK)!
-        .storeData(open, "ONEMBONK-PERP", 1000 * (timestamp + 1), retention);
+        .get(constants.Asset.SEI)!
+        .storeData(open, "SEI-PERP", 1000 * (timestamp + 1), retention);
       await storeMap
-        .get(constants.Asset.ONEMBONK)!
-        .storeData(
-          close,
-          "ONEMBONK-PERP",
-          1000 * (timestamp + 3600 - 1),
-          retention
-        );
+        .get(constants.Asset.SEI)!
+        .storeData(close, "SEI-PERP", 1000 * (timestamp + 3600 - 1), retention);
     })
   );
 }
@@ -167,7 +162,7 @@ async function main(client: RedisTimeSeries) {
 
     await Exchange.load(loadExchangeConfig);
 
-    // Only use
+    // Only use for one-off backfilling for new assets or holes in data
     // await backfill();
 
     setInterval(
