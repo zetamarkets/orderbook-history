@@ -6,6 +6,7 @@ import {
   assets,
   constants,
   Decimal,
+  events,
   Exchange,
   Network,
   types,
@@ -45,6 +46,23 @@ const connection: Connection = new Connection(
 );
 
 let storeMap = new Map<constants.Asset, RedisStore>();
+let lastOrderbookTs = new Map<constants.Asset, number>();
+let lastPricingTs = 0;
+
+async function exchangeCallback(
+  asset: constants.Asset,
+  eventType: events.EventType,
+  _data: any
+) {
+  if (eventType == events.EventType.ORDERBOOK) {
+    lastOrderbookTs.set(asset, Date.now() / 1000);
+    // console.log(`lastOrderbookTs = ${lastOrderbookTs.get(asset)}`);
+  }
+  if (eventType == events.EventType.PRICING) {
+    lastPricingTs = Date.now() / 1000;
+    // console.log(`lastPricingTs = ${lastPricingTs}`);
+  }
+}
 
 // Not used in prod but handy to keep around for backfilling data easily
 async function backfill() {
@@ -60,7 +78,7 @@ async function backfill() {
       let open = parseFloat(jsonData["o"][i]);
       let close = parseFloat(jsonData["c"][i]);
 
-      // console.log(timestamp, open, close);
+      console.log(timestamp, open, close);
       await storeMap
         .get(constants.Asset.SEI)!
         .storeData(open, "SEI-PERP", 1000 * (timestamp + 1), retention);
@@ -91,7 +109,9 @@ async function readMidpoints() {
           Exchange.pricing.updateTimestamps[
             assets.assetToIndex(asset)
           ].toNumber() >
-          120
+          120 ||
+        (lastOrderbookTs.has(asset) &&
+          Date.now() / 1000 - lastOrderbookTs.get(asset)! > 120)
       ) {
         console.log(
           `[${asset}] Overriding midpoint with mark price. bidsLen=${
@@ -160,7 +180,7 @@ async function main(client: RedisTimeSeries) {
       true
     );
 
-    await Exchange.load(loadExchangeConfig);
+    await Exchange.load(loadExchangeConfig, undefined, exchangeCallback);
 
     // Only use for one-off backfilling for new assets or holes in data
     // await backfill();
