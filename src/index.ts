@@ -95,7 +95,7 @@ async function readMidpoints() {
     Exchange.assets.map(async (asset) => {
       let midpoint = 0;
 
-      if (!Exchange.isSetup) return;
+      if (!Exchange.isSetup || !Exchange.isInitialized) return;
       let orderbook = Exchange.getOrderbook(asset);
       let markPrice = Exchange.oracle.getPrice(asset).price;
       console.log(`[${asset}] markPrice=${markPrice}`);
