@@ -91,7 +91,8 @@ async function backfill() {
 
 async function readMidpoints() {
   await Exchange.updateZetaPricing();
-  if (!Exchange.isSetup || !Exchange.isInitialized) return;
+  if (!Exchange.isSetup || !Exchange.isInitialized || Exchange.assets == null)
+    return;
   await Promise.all(
     Exchange.assets.map(async (asset) => {
       let midpoint = 0;
