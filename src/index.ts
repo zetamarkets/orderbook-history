@@ -91,14 +91,13 @@ async function backfill() {
 
 async function readMidpoints() {
   await Exchange.updateZetaPricing();
-  if (!Exchange.isSetup || !Exchange.isInitialized || Exchange.assets == null)
-    return;
+  if (!Exchange.isSetup || !Exchange.isInitialized) return;
   await Promise.all(
     Exchange.assets.map(async (asset) => {
       let midpoint = 0;
 
       let orderbook = Exchange.getOrderbook(asset);
-      let markPrice = Exchange.oracle.getPrice(asset).price;
+      let markPrice = Exchange.getMarkPrice(asset);
       console.log(`[${asset}] markPrice=${markPrice}`);
 
       // If the orderbook is empty just grab the oracle price so we don't have gaps
